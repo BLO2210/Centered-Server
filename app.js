@@ -64,7 +64,7 @@ app.post('/login', (req, res) => {
             return res.status(500).json({success:false, message: 'Internal server error'})
         })
     })
-    .catfch(err => {
+    .catch(err => {
         return res.status(500).json({success: false, message: 'Internal server error'})
     })
 })
