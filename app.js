@@ -69,6 +69,32 @@ app.post('/login', (req, res) => {
     })
 })
 
+app.post('/api/mood-rating', async (req, res) => {
+  const rating = req.body.rating
+  const userId = req.body.userId
+
+  try {
+    const user = await User.findById(userId)
+
+    if (!user) {
+      return res.status(404).json({error: 'User not found'})
+    }
+    user.moodRatings.push({rating})
+    await user.save()
+    return res.status(200).json({message: 'Mood Logged'})
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({error: 'Server error'})
+  }
+})
+
+
+
+
+
+
+
+
 app.listen(8080, () => {
     console.log('Server is up')
   })

@@ -3,6 +3,19 @@ const bcrypt = require('bcrypt')
 
 //link any related schemas below
 
+const MoodRatingSchema = new mongoose.Schema({
+    rating: {
+        type: Number,
+        min: 1,
+        max: 10,
+        required: true,
+    },
+    timestamp: {
+        type: Date,
+        default: Date.now,
+    },
+})
+
 const Userschema = new mongoose.Schema({
     username: {
         type: String,
@@ -12,7 +25,8 @@ const Userschema = new mongoose.Schema({
     password: {
         type: String,
         required: true
-    }
+    },
+    moodRatings: [MoodRatingSchema]
 })
 
 const User = mongoose.model("User", Userschema)
