@@ -10,6 +10,12 @@ const MoodRatingSchema = new mongoose.Schema({
         max: 10,
         required: true,
     },
+    sleepQuality: {
+        type: Number,
+        min: 1,
+        max: 10,
+        required: true,
+    },
     timestamp: {
         type: Date,
         default: Date.now,
@@ -26,7 +32,7 @@ const Userschema = new mongoose.Schema({
         type: String,
         required: true
     },
-    moodRatings: [MoodRatingSchema]
+    moodRatings: [MoodRatingSchema],
 })
 
 const User = mongoose.model("User", Userschema)
