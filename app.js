@@ -110,6 +110,19 @@ app.post('/api/mood-rating', async (req, res) => {
   }
 });
 
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const id = req.params.id; // get the ID from the request parameters
+    const user = await User.findById(id); // find the user with this ID
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 
 
