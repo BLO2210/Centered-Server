@@ -16,6 +16,16 @@ const MoodRatingSchema = new mongoose.Schema({
         max: 10,
         required: true,
     },
+    nutritionRating: {
+        type: String,
+        enum: [
+          'satisfied-nutritious',
+          'satisfied-not-nutritious',
+          'not-satisfied-somewhat-nutritious',
+          'not-satisfied-not-nutritious',
+        ],
+        required: true
+    },
     timestamp: {
         type: Date,
         default: Date.now,

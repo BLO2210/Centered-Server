@@ -68,6 +68,20 @@ app.post('/login', (req, res) => {
         return res.status(500).json({success: false, message: 'Internal server error'})
     })
 })
+
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const id = req.params.id; // get the ID from the request parameters
+    const user = await User.findById(id); // find the user with this ID
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 //old
 // app.post('/api/mood-rating', async (req, res) => {
 //   const rating = req.body.rating
@@ -92,6 +106,7 @@ app.post('/api/mood-rating', async (req, res) => {
   const rating = req.body.rating;
   const sleepQuality = req.body.sleepQuality; // Added sleepQuality from the request body
   const userId = req.body.userId;
+  const nutritionRating = req.body.nutritionRating
 
   try {
     const user = await User.findById(userId);
@@ -101,7 +116,7 @@ app.post('/api/mood-rating', async (req, res) => {
     }
 
     // Push both rating and sleepQuality into the moodRatings array for the user
-    user.moodRatings.push({rating, sleepQuality});
+    user.moodRatings.push({rating, sleepQuality, nutritionRating});
     await user.save();
     return res.status(200).json({message: 'Mood and Sleep Quality Logged'});
   } catch (error) {
