@@ -106,7 +106,7 @@ app.post('/api/mood-rating', async (req, res) => {
   const rating = req.body.rating;
   const sleepQuality = req.body.sleepQuality; // Added sleepQuality from the request body
   const userId = req.body.userId;
-  const nutritionRating = req.body.nutritionRating
+  // const nutritionRating = req.body.nutritionRating
 
   try {
     const user = await User.findById(userId);
@@ -116,7 +116,7 @@ app.post('/api/mood-rating', async (req, res) => {
     }
 
     // Push both rating and sleepQuality into the moodRatings array for the user
-    user.moodRatings.push({rating, sleepQuality, nutritionRating});
+    user.moodRatings.push({rating, sleepQuality});
     await user.save();
     return res.status(200).json({message: 'Mood and Sleep Quality Logged'});
   } catch (error) {
@@ -124,6 +124,33 @@ app.post('/api/mood-rating', async (req, res) => {
     return res.status(500).json({error: 'Server error'});
   }
 });
+
+// Test out below
+// app.post('/api/mood-rating', async (req, res) => {
+//   const rating = req.body.rating;
+//   const sleepQuality = req.body.sleepQuality; // Added sleepQuality from the request body
+//   const userId = req.body.userId;
+//   const nutritionRating = req.body.nutritionRating;
+
+//   console.log('Request body:', req.body);  // Log the incoming request body
+
+//   try {
+//     const user = await User.findById(userId);
+
+//     if (!user) {
+//       return res.status(404).json({error: 'User not found'});
+//     }
+
+//     // Push both rating and sleepQuality into the moodRatings array for the user
+//     user.moodRatings.push({rating, sleepQuality, nutritionRating});
+//     await user.save();
+//     return res.status(200).json({message: 'Mood and Sleep Quality Logged'});
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({error: 'Server error'});
+//   }
+// });
+
 
 app.get('/api/users/:id', async (req, res) => {
   try {
