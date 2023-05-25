@@ -103,10 +103,15 @@ app.get('/api/users/:id', async (req, res) => {
 // })
 
 app.post('/api/mood-rating', async (req, res) => {
+  console.log('Hello World')
+
+  const userId = req.body.userId;
   const rating = req.body.rating;
   const sleepQuality = req.body.sleepQuality; // Added sleepQuality from the request body
-  const userId = req.body.userId;
-  // const nutritionRating = req.body.nutritionRating
+  const productivityRating = req.body.productivityRating
+  const nutritionRating = req.body.nutritionRating
+  console.log(nutritionRating)
+
 
   try {
     const user = await User.findById(userId);
@@ -116,9 +121,10 @@ app.post('/api/mood-rating', async (req, res) => {
     }
 
     // Push both rating and sleepQuality into the moodRatings array for the user
-    user.moodRatings.push({rating, sleepQuality});
+ 
+    user.moodRatings.push({rating, sleepQuality, productivityRating, nutritionRating});
     await user.save();
-    return res.status(200).json({message: 'Mood and Sleep Quality Logged'});
+    return res.status(200).json({message: 'Day Logged'});
   } catch (error) {
     console.error(error);
     return res.status(500).json({error: 'Server error'});
