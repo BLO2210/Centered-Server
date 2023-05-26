@@ -1,7 +1,4 @@
 const mongoose = require('mongoose')
-const bcrypt = require('bcrypt')
-
-//link any related schemas below
 
 const MoodRatingSchema = new mongoose.Schema({
     rating: {
@@ -23,13 +20,9 @@ const MoodRatingSchema = new mongoose.Schema({
         required: true,
     },
     nutritionRating: {
-        type: String,
-        enum: [
-          'satisfied-nutritious',
-          'satisfied-not-nutritious',
-          'not-satisfied-somewhat-nutritious',
-          'not-satisfied-not-nutritious',
-        ],
+        type: Number,
+        min: 1,
+        max: 4,
         required: true
     },
     timestamp: {
