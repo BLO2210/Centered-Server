@@ -35,52 +35,52 @@ function getWeekDates() {
 }
 
 app.post('/register', async (req, res) => {
-    const username = req.body.username
-    const password = req.body.password
+  const username = req.body.username
+  const password = req.body.password
 
-    const user = new User({
-        username: username,
-        password: password
-    })
-    const salt = await bcrypt.genSalt(10)
+  const user = new User({
+    username: username,
+    password: password
+  })
+  const salt = await bcrypt.genSalt(10)
 
-    const passwordHash = await bcrypt.hash(password, salt)
-    user.password = passwordHash;
+  const passwordHash = await bcrypt.hash(password, salt)
+  user.password = passwordHash;
 
-    try {
-        await user.save()
-        res.status(200).json({ message: 'Registration successful' })
-      } catch (error) {
-        console.error(error)
-        res.status(500).json({ message: 'Internal server error' })
-      }
+  try {
+    await user.save()
+    res.status(200).json({ message: 'Registration successful' })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
 })
 
 app.post('/login', (req, res) => {
-    const {username, password} = req.body
+  const { username, password } = req.body
 
-    User.findOne({ username })
+  User.findOne({ username })
     .then(user => {
-        console.log(user)
-        if(!user) {
-            return res.state(401).json({success: false, message: 'Incorrect username'})
-        }
-        bcrypt.compare(password, user.password)
+      console.log(user)
+      if (!user) {
+        return res.state(401).json({ success: false, message: 'Incorrect username' })
+      }
+      bcrypt.compare(password, user.password)
         .then(result => {
-            console.log(result)
-            if(!result) {
-                return res.status(401).json({success: false, message: 'Incorrect password'})
-            }
+          console.log(result)
+          if (!result) {
+            return res.status(401).json({ success: false, message: 'Incorrect password' })
+          }
 
-            const token = jwt.sign({ username }, 'SECRETKEY')
-            res.json({success:true, token, userId: user._id})
+          const token = jwt.sign({ username }, 'SECRETKEY')
+          res.json({ success: true, token, userId: user._id })
         })
         .catch(err => {
-            return res.status(500).json({success:false, message: 'Internal server error'})
+          return res.status(500).json({ success: false, message: 'Internal server error' })
         })
     })
     .catch(err => {
-        return res.status(500).json({success: false, message: 'Internal server error'})
+      return res.status(500).json({ success: false, message: 'Internal server error' })
     })
 })
 //old
@@ -114,15 +114,15 @@ app.post('/api/mood-rating', async (req, res) => {
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).json({error: 'User not found'});
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    user.moodRatings.push({rating, sleepQuality, productivityRating, nutritionRating}); // updated
+    user.moodRatings.push({ rating, sleepQuality, productivityRating, nutritionRating }); // updated
     await user.save();
-    return res.status(200).json({message: 'Mood, Sleep Quality, Productivity, and Nutrition Rating Logged'}); // updated
+    return res.status(200).json({ message: 'Mood, Sleep Quality, Productivity, and Nutrition Rating Logged' }); // updated
   } catch (error) {
     console.error(error);
-    return res.status(500).json({error: 'Server error'});
+    return res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -142,34 +142,118 @@ app.get('/api/users/:id', async (req, res) => {
 
 app.get('/api/productivity/:userId', async (req, res) => {
   try {
-      const { userId } = req.params;
-      const user = await User.findById(userId);
+    const { userId } = req.params;
+    const user = await User.findById(userId);
 
-      if (!user) {
-          return res.status(404).json({ message: 'User not found' });
-      }
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
-      const today = moment().startOf('day');
-      const weekStart = today.clone().subtract(today.day(), 'days');
-      const weekEnd = weekStart.clone().add(6, 'days');
+    const today = moment().startOf('day');
+    const weekStart = today.clone().subtract(today.day(), 'days');
+    const weekEnd = weekStart.clone().add(6, 'days');
 
-      const thisWeeksRatings = user.moodRatings.filter((rating) => {
-          const ratingDate = moment(rating.timestamp);
-          return ratingDate.isBetween(weekStart, weekEnd, null, '[]');
-      });
+    const thisWeeksRatings = user.moodRatings.filter((rating) => {
+      const ratingDate = moment(rating.timestamp);
+      return ratingDate.isBetween(weekStart, weekEnd, null, '[]');
+    });
 
-      const total = thisWeeksRatings.reduce((total, rating) => total + rating.productivityRating, 0);
-      const average = total / thisWeeksRatings.length || 0; // The || 0 handles case where thisWeeksRatings.length is 0 to avoid NaN
+    const total = thisWeeksRatings.reduce((total, rating) => total + rating.productivityRating, 0);
+    const average = total / thisWeeksRatings.length || 0; // The || 0 handles case where thisWeeksRatings.length is 0 to avoid NaN
 
-      res.json({ averageProductivity: average });
+    res.json({ averageProductivity: average });
 
   } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Server error' });
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
 
+
+
+
+
+app.get('/api/mood-rating/:userId/:date', async (req, res) => {
+  const { userId, date } = req.params;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const moodRating = user.moodRatings.find((rating) => rating.timestamp.toISOString().split('T')[0] === date);
+    if (!moodRating) {
+      return res.status(404).json({ message: 'Mood rating not found for the specified date' });
+    }
+
+    res.json({
+      id: moodRating._id,
+      rating: moodRating.rating,
+      sleepQuality: moodRating.sleepQuality,
+      productivityRating: moodRating.productivityRating,
+      nutritionRating: moodRating.nutritionRating,
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+
+
+
+  // workshop below
+
+  app.get('/api/mood-rating/:userId/:date', async (req, res) => {
+    const { userId, date } = req.params;
+  
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+  
+      const moodRating = user.moodRatings.find((rating) => rating.timestamp.toISOString().split('T')[0] === date);
+      if (!moodRating) {
+        return res.status(404).json({ message: 'Mood rating not found for the specified date' });
+      }
+  
+      res.json({
+        id: moodRating._id,
+        rating: moodRating.rating,
+        sleepQuality: moodRating.sleepQuality,
+        productivityRating: moodRating.productivityRating,
+        nutritionRating: moodRating.nutritionRating,
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+  
+//   useEffect(() => {
+//     const userId = localStorage.getItem('userId');
+//     const date = new Date().toISOString().split('T')[0];
+
+//     fetch(http://localhost:8080/api/mood-rating/${userId}/${date})
+//         .then((response) => response.json())
+//         .then((data) => {
+//             if (data) {
+//                 setFormId(data.id);
+//                 setRating(data.rating);
+//                 setSleepQuality(data.sleepQuality);
+//                 setProductivityRating(data.productivityRating);
+//                 setNutritionRating(data.nutritionRating);
+//             }
+//         })
+//         .catch((error) => {
+//             console.error('Error:', error);
+//         });
+// }, []);
+
 app.listen(8080, () => {
-    console.log('Server is up')
-  })
+  console.log('Server is up')
+})
