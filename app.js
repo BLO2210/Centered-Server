@@ -161,6 +161,167 @@ app.get('/api/users/:id', async (req, res) => {
   }
 });
 
+app.get('/api/productivity/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const today = moment().startOf('day');
+    const weekStart = today.clone().subtract(today.day(), 'days');
+    const weekEnd = weekStart.clone().add(6, 'days');
+
+    const thisWeeksRatings = user.moodRatings.filter((rating) => {
+      const ratingDate = moment(rating.timestamp);
+      return ratingDate.isBetween(weekStart, weekEnd, null, '[]');
+    });
+
+    const total = thisWeeksRatings.reduce((total, rating) => total + rating.productivityRating, 0);
+    const average = total / thisWeeksRatings.length || 0; // The || 0 handles case where thisWeeksRatings.length is 0 to avoid NaN
+
+    res.json({ averageProductivity: average });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+
+
+
+
+app.get('/api/mood-rating/:userId/:date', async (req, res) => {
+  const { userId, date } = req.params;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const moodRating = user.moodRatings.find((rating) => rating.timestamp.toISOString().split('T')[0] === date);
+    if (!moodRating) {
+      return res.status(404).json({ message: 'Mood rating not found for the specified date' });
+    }
+
+    res.json({
+      id: moodRating._id,
+      rating: moodRating.rating,
+      sleepQuality: moodRating.sleepQuality,
+      productivityRating: moodRating.productivityRating,
+      nutritionRating: moodRating.nutritionRating,
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+
+
+
+  // workshop below
+
+  app.get('/api/tasks/:userId', async (req, res) => {
+    const { userId } = req.params;
+  
+    try {
+      const user = await User.findById(userId).select('moodRatings.tasks');
+  
+      const tasks = user.moodRatings.flatMap(({ tasks }) =>
+        tasks.map((task) => ({ ...task.toObject() }))
+      );
+  
+      res.json(tasks);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+  
+
+  app.put('/api/tasks/:userId/:taskId', async (req, res) => {
+    const { userId, taskId } = req.params;
+    const { isComplete } = req.body;
+  
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+  
+      const task = user.moodRatings.flatMap(({ tasks }) => tasks).find((task) => task._id.toString() === taskId);
+      if (!task) {
+        return res.status(404).json({ message: 'Task not found' });
+      }
+  
+      task.isComplete = isComplete;
+      await user.save();
+  
+      res.json({ message: 'Task updated successfully' });
+    } catch (error) {
+      console.error('Error updating task:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+  
+  
+  
+
+
+  app.get('/api/mood-rating/:userId/:date', async (req, res) => {
+    const { userId, date } = req.params;
+  
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+  
+      const moodRating = user.moodRatings.find((rating) => rating.timestamp.toISOString().split('T')[0] === date);
+      if (!moodRating) {
+        return res.status(404).json({ message: 'Mood rating not found for the specified date' });
+      }
+  
+      res.json({
+        id: moodRating._id,
+        rating: moodRating.rating,
+        sleepQuality: moodRating.sleepQuality,
+        productivityRating: moodRating.productivityRating,
+        nutritionRating: moodRating.nutritionRating,
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+  
+//   useEffect(() => {
+//     const userId = localStorage.getItem('userId');
+//     const date = new Date().toISOString().split('T')[0];
+
+//     fetch(http://localhost:8080/api/mood-rating/${userId}/${date})
+//         .then((response) => response.json())
+//         .then((data) => {
+//             if (data) {
+//                 setFormId(data.id);
+//                 setRating(data.rating);
+//                 setSleepQuality(data.sleepQuality);
+//                 setProductivityRating(data.productivityRating);
+//                 setNutritionRating(data.nutritionRating);
+//             }
+//         })
+//         .catch((error) => {
+//             console.error('Error:', error);
+//         });
+// }, []);
+
 app.listen(8080, () => {
     console.log('Server is up')
 })
