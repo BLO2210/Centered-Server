@@ -18,22 +18,6 @@ mongoose.connect('mongodb+srv://centeredappdevs:C4h3f1cyrtoDR6rz@cluster0.awbfnp
     console.log(error)
   })
 
-function getWeekDates() {
-  let now = new Date();
-  let dayOfWeek = now.getDay();
-  let numDay = now.getDate();
-
-  let start = new Date(now); //copy
-  start.setDate(numDay - dayOfWeek);
-  start.setHours(0, 0, 0, 0);
-
-  let end = new Date(now); //copy
-  end.setDate(numDay + (7 - dayOfWeek));
-  end.setHours(23, 59, 59, 999);
-
-  return [start, end];
-}
-
 app.post('/register', async (req, res) => {
   const username = req.body.username
   const password = req.body.password
@@ -83,31 +67,13 @@ app.post('/login', (req, res) => {
       return res.status(500).json({ success: false, message: 'Internal server error' })
     })
 })
-//old
-// app.post('/api/mood-rating', async (req, res) => {
-//   const rating = req.body.rating
-//   const userId = req.body.userId
-
-//   try {
-//     const user = await User.findById(userId)
-
-//     if (!user) {
-//       return res.status(404).json({error: 'User not found'})
-//     }
-//     user.moodRatings.push({rating})
-//     await user.save()
-//     return res.status(200).json({message: 'Mood Logged'})
-//   } catch (error) {
-//     console.error(error)
-//     return res.status(500).json({error: 'Server error'})
-//   }
-// })
 
 app.post('/api/mood-rating', async (req, res) => {
   const rating = req.body.rating;
   const sleepQuality = req.body.sleepQuality;
-  const productivityRating = req.body.productivityRating; // new
-  const nutritionRating = req.body.nutritionRating; // new
+  const nutritionRating = req.body.nutritionRating;
+  const tasks = req.body.tasks;
+  const exercise = req.body.exercise;
   const userId = req.body.userId;
 
   try {
@@ -117,12 +83,67 @@ app.post('/api/mood-rating', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    user.moodRatings.push({ rating, sleepQuality, productivityRating, nutritionRating }); // updated
+    user.moodRatings.push({rating, sleepQuality, nutritionRating, tasks, exercise});
     await user.save();
-    return res.status(200).json({ message: 'Mood, Sleep Quality, Productivity, and Nutrition Rating Logged' }); // updated
+    return res.status(200).json({message: 'Day logged', ratingId: user.moodRatings[user.moodRatings.length - 1]._id});
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.get('/api/mood-rating/:userId/:date', async (req, res) => {
+  const { userId, date } = req.params;
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const formattedDate = new Date(date);
+    const moodRating = user.moodRatings.find(rating => {
+      const ratingDate = new Date(rating.timestamp);
+      return ratingDate.getUTCFullYear() === formattedDate.getUTCFullYear() &&
+        ratingDate.getUTCMonth() === formattedDate.getUTCMonth() &&
+        ratingDate.getUTCDate() === formattedDate.getUTCDate();
+    });
+
+    if (!moodRating) {
+      return res.status(404).json({ error: 'No mood rating found for this day' });
+    }
+
+    return res.status(200).json(moodRating);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.put('/api/mood-rating/:id', async (req, res) => {
+  const ratingId = req.params.id;
+  const userId = req.body.userId;
+  const updatedData = req.body;
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({error: 'User not found'});
+    }
+
+    const ratingIndex = user.moodRatings.findIndex(rating => rating._id.toString() === ratingId);
+    if (ratingIndex === -1) {
+      return res.status(404).json({error: 'Rating not found'});
+    }
+
+    user.moodRatings[ratingIndex] = {...user.moodRatings[ratingIndex]._doc, ...updatedData};
+    await user.save();
+    return res.status(200).json({message: 'Mood rating updated'});
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({error: 'Server error'});
   }
 });
 
@@ -302,5 +323,5 @@ app.get('/api/mood-rating/:userId/:date', async (req, res) => {
 // }, []);
 
 app.listen(8080, () => {
-  console.log('Server is up')
+    console.log('Server is up')
 })
