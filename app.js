@@ -207,6 +207,53 @@ app.get('/api/mood-rating/:userId/:date', async (req, res) => {
 
   // workshop below
 
+  app.get('/api/tasks/:userId', async (req, res) => {
+    const { userId } = req.params;
+  
+    try {
+      const user = await User.findById(userId).select('moodRatings.tasks');
+  
+      const tasks = user.moodRatings.flatMap(({ tasks }) =>
+        tasks.map((task) => ({ ...task.toObject() }))
+      );
+  
+      res.json(tasks);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+  
+
+  app.put('/api/tasks/:userId/:taskId', async (req, res) => {
+    const { userId, taskId } = req.params;
+    const { isComplete } = req.body;
+  
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+  
+      const task = user.moodRatings.flatMap(({ tasks }) => tasks).find((task) => task._id.toString() === taskId);
+      if (!task) {
+        return res.status(404).json({ message: 'Task not found' });
+      }
+  
+      task.isComplete = isComplete;
+      await user.save();
+  
+      res.json({ message: 'Task updated successfully' });
+    } catch (error) {
+      console.error('Error updating task:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+  
+  
+  
+
+
   app.get('/api/mood-rating/:userId/:date', async (req, res) => {
     const { userId, date } = req.params;
   
