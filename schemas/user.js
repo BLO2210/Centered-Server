@@ -30,6 +30,10 @@ const MoodRatingSchema = new mongoose.Schema({
     max: 4,
     required: true,
   },
+  exercise: {
+    type: Boolean,
+    default: false,
+  },
   timestamp: {
     type: Date,
     default: Date.now,
