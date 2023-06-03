@@ -8,9 +8,6 @@ const TaskSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  timestamp: {
-    type: Date,
-    default: Date.now,}
 });
 
 const MoodRatingSchema = new mongoose.Schema({
